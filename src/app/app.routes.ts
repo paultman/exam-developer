@@ -4,6 +4,7 @@ import { DashboardComponent } from './features/dashboard/dashboard.component';
 import { GeneralComponent } from './features/general/general.component';
 import { PlaceholderComponent } from './features/placeholder/placeholder.component';
 import { KnowledgeBaseComponent } from './features/knowledge-base/knowledge-base.component';
+import { MetadataComponent } from './features/metadata/metadata.component';
 
 export const routes: Routes = [
   {
@@ -22,6 +23,10 @@ export const routes: Routes = [
   {
     path: 'knowledge-base',
     component: KnowledgeBaseComponent,
+  },
+  {
+    path: 'metadata',
+    component: MetadataComponent,
   },
   // Placeholder routes for other sections
   { path: 'knowledge-base', component: PlaceholderComponent },
