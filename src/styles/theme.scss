@@ -1,0 +1,39 @@
+// src/styles/theme.scss
+@use '@angular/material' as mat;
+
+// Define Pearson brand colors
+$exam-dev-primary: mat.define-palette((
+  50: #e3f2fd,
+  100: #bbdefb,
+  500: #0073EA,  // Primary brand color from screenshots
+  700: #005CB8,
+  contrast: (
+    50: rgba(0,0,0,0.87),
+    100: rgba(0,0,0,0.87),
+    500: white,
+    700: white,
+  )
+));
+
+$exam-dev-accent: mat.define-palette(mat.$teal-palette);
+$exam-dev-warn: mat.define-palette(mat.$red-palette);
+
+$exam-dev-theme: mat.define-light-theme((
+  color: (
+    primary: $exam-dev-primary,
+    accent: $exam-dev-accent,
+    warn: $exam-dev-warn,
+  ),
+  typography: mat.define-typography-config(),
+  density: 0,
+));
+
+// Include theme styles for core and each component used
+@include mat.core();
+@include mat.all-component-themes($exam-dev-theme);
+
+// Custom styles to match Pearson design
+.mat-toolbar {
+  background: #003057 !important; // Pearson navy blue
+  color: white !important;
+}
