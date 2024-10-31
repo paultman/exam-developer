@@ -1,10 +1,19 @@
-// src/app/features/dashboard/dashboard.component.ts
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { PageHeaderComponent } from '../../shared/components/page-header/page-header.component';
 import { PageFooterComponent } from '../../shared/components/page-footer/page-footer.component';
+import { ComponentStatusService } from '../../shared/services/component-status.service';
+import { ComponentStatus } from '../../shared/interfaces/component-status.interface';
+
+interface NavigationTile {
+  id: ComponentStatus['id'];
+  svg: string;
+  title: string;
+  route: string;
+  color: string;
+}
 
 @Component({
   selector: 'app-dashboard',
@@ -24,7 +33,9 @@ import { PageFooterComponent } from '../../shared/components/page-footer/page-fo
           <h1>Item Assist</h1>
           <div class="ai-status">
             <span class="label">AI assisted item writing:</span>
-            <span class="status">Disabled</span>
+            <span class="status" [class.enabled]="aiWritingEnabled$ | async">
+              {{ (aiWritingEnabled$ | async) ? 'Enabled' : 'Disabled' }}
+            </span>
           </div>
         </div>
 
@@ -42,7 +53,22 @@ import { PageFooterComponent } from '../../shared/components/page-footer/page-fo
             (click)="navigateTo(tile.route)"
             [ngStyle]="{ 'border-top-color': tile.color }"
           >
-            <div class="tile-header"></div>
+            <div class="tile-header">
+              @if ((componentStatuses$ | async)?.[tile.id]?.isComplete) {
+              <div class="completion-check">
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"
+                    fill="#4CAF50"
+                  />
+                </svg>
+              </div>
+              }
+            </div>
             <div class="tile-content">
               <div class="tile-icon" [style.backgroundColor]="tile.color">
                 <div
@@ -119,6 +145,10 @@ import { PageFooterComponent } from '../../shared/components/page-footer/page-fo
           .status {
             color: #0073ea;
             margin-left: 4px;
+
+            &.enabled {
+              color: #4caf50;
+            }
           }
         }
       }
@@ -141,7 +171,7 @@ import { PageFooterComponent } from '../../shared/components/page-footer/page-fo
             content: '';
             position: absolute;
             top: 50%;
-            width: 200px; // Increased line length
+            width: 200px;
             height: 1px;
             background: rgba(0, 0, 0, 0.12);
           }
@@ -168,7 +198,7 @@ import { PageFooterComponent } from '../../shared/components/page-footer/page-fo
         gap: 24px;
         margin: 32px auto;
         width: 100%;
-        max-width: 1000px; // Makes cards slightly smaller
+        max-width: 1000px;
       }
 
       .navigation-tile {
@@ -190,6 +220,15 @@ import { PageFooterComponent } from '../../shared/components/page-footer/page-fo
         background-color: rgba(0, 0, 0, 0.04);
         border-top-left-radius: 4px;
         border-top-right-radius: 4px;
+        position: relative;
+      }
+
+      .completion-check {
+        position: absolute;
+        top: 12px;
+        right: 12px;
+        width: 24px;
+        height: 24px;
       }
 
       .tile-content {
@@ -202,10 +241,10 @@ import { PageFooterComponent } from '../../shared/components/page-footer/page-fo
       .tile-icon {
         position: absolute;
         top: -36px;
-        left: 24px; // Changed to left from right
+        left: 24px;
         width: 48px;
         height: 48px;
-        border-radius: 16px; // More rounded corners
+        border-radius: 16px;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -233,9 +272,10 @@ import { PageFooterComponent } from '../../shared/components/page-footer/page-fo
     `,
   ],
 })
-export class DashboardComponent {
-  navigationTiles = [
+export class DashboardComponent implements OnInit {
+  navigationTiles: NavigationTile[] = [
     {
+      id: 'general',
       svg: `<svg viewBox="0 0 24 24">
         <rect width="24" height="24" fill="none"/>
         <path fill="white" d="M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.07-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61 l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.03-0.7-1.62-0.94L14.4,2.81c-0.04-0.24-0.24-0.41-0.48-0.41 h-3.84c-0.24,0-0.43,0.17-0.47,0.41L9.25,5.35C8.66,5.59,8.12,5.92,7.63,6.29L5.24,5.33c-0.22-0.08-0.47,0-0.59,0.22L2.74,8.87 C2.62,9.08,2.66,9.34,2.86,9.48l2.03,1.58C4.84,11.36,4.8,11.69,4.8,12s0.02,0.64,0.07,0.94l-2.03,1.58 c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22l2.39-0.96c0.5,0.38,1.03,0.7,1.62,0.94l0.36,2.54 c0.05,0.24,0.24,0.41,0.48,0.41h3.84c0.24,0,0.44-0.17,0.47-0.41l0.36-2.54c0.59-0.24,1.13-0.56,1.62-0.94l2.39,0.96 c0.22,0.08,0.47,0,0.59-0.22l1.92-3.32c0.12-0.22,0.07-0.47-0.12-0.61L19.14,12.94z M12,15.6c-1.98,0-3.6-1.62-3.6-3.6 s1.62-3.6,3.6-3.6s3.6,1.62,3.6,3.6S13.98,15.6,12,15.6z"/>
@@ -245,6 +285,7 @@ export class DashboardComponent {
       color: '#424242',
     },
     {
+      id: 'knowledge-base',
       svg: `<svg viewBox="0 0 24 24">
         <rect width="24" height="24" fill="none"/>
         <path fill="white" d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zM6 20V4h7v5h5v11H6z"/>
@@ -254,6 +295,7 @@ export class DashboardComponent {
       color: '#0073EA',
     },
     {
+      id: 'metadata',
       svg: `<svg viewBox="0 0 24 24">
         <rect width="24" height="24" fill="none"/>
         <path fill="white" d="M21.41 11.58l-9-9C12.05 2.22 11.55 2 11 2H4c-1.1 0-2 .9-2 2v7c0 .55.22 1.05.59 1.42l9 9c.36.36.86.58 1.41.58.55 0 1.05-.22 1.41-.59l7-7c.37-.36.59-.86.59-1.41 0-.55-.23-1.06-.59-1.42zM5.5 7C4.67 7 4 6.33 4 5.5S4.67 4 5.5 4 7 4.67 7 5.5 6.33 7 5.5 7z"/>
@@ -263,6 +305,7 @@ export class DashboardComponent {
       color: '#FF4E4E',
     },
     {
+      id: 'additional-parameters',
       svg: `<svg viewBox="0 0 24 24">
         <rect width="24" height="24" fill="none"/>
         <path fill="white" d="M3 17v2h6v-2H3zM3 5v2h10V5H3zm10 16v-2h8v-2h-8v-2h-2v6h2zM7 9v2H3v2h4v2h2V9H7zm14 4v-2H11v2h10zm-6-4h2V7h4V5h-4V3h-2v6z"/>
@@ -272,6 +315,7 @@ export class DashboardComponent {
       color: '#4CAF50',
     },
     {
+      id: 'prompt',
       svg: `<svg viewBox="0 0 24 24">
         <rect width="24" height="24" fill="none"/>
         <path fill="white" d="M9.4 16.6L4.8 12l4.6-4.6L8 6l-6 6 6 6 1.4-1.4zm5.2 0l4.6-4.6-4.6-4.6L16 6l6 6-6 6-1.4-1.4z"/>
@@ -282,7 +326,16 @@ export class DashboardComponent {
     },
   ];
 
-  constructor(private router: Router, private sanitizer: DomSanitizer) {}
+  componentStatuses$ = this.componentStatusService.getAllComponentStatuses();
+  aiWritingEnabled$ = this.componentStatusService.isAiWritingEnabled();
+
+  constructor(
+    private router: Router,
+    private sanitizer: DomSanitizer,
+    private componentStatusService: ComponentStatusService
+  ) {}
+
+  ngOnInit(): void {}
 
   getSafeHtml(svg: string): SafeHtml {
     return this.sanitizer.bypassSecurityTrustHtml(svg);

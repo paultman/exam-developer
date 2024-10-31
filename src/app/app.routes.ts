@@ -5,6 +5,8 @@ import { GeneralComponent } from './features/general/general.component';
 import { PlaceholderComponent } from './features/placeholder/placeholder.component';
 import { KnowledgeBaseComponent } from './features/knowledge-base/knowledge-base.component';
 import { MetadataComponent } from './features/metadata/metadata.component';
+import { AdditionalParametersComponent } from './features/additional-parameters/additional-parameters.component';
+import { PromptComponent } from './features/prompt/prompt.component';
 
 export const routes: Routes = [
   {
@@ -27,6 +29,14 @@ export const routes: Routes = [
   {
     path: 'metadata',
     component: MetadataComponent,
+  },
+  {
+    path: 'parameters',
+    component: AdditionalParametersComponent,
+  },
+  {
+    path: 'prompt',
+    component: PromptComponent,
   },
   // Placeholder routes for other sections
   { path: 'knowledge-base', component: PlaceholderComponent },

@@ -1,15 +1,27 @@
+// src/app/features/metadata/metadata.component.ts
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
+import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
-import { MatSelectModule } from '@angular/material/select';
-import { MatInputModule } from '@angular/material/input';
 import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { MatSelectModule } from '@angular/material/select';
+import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { PageHeaderComponent } from '../../shared/components/page-header/page-header.component';
 import { PageFooterComponent } from '../../shared/components/page-footer/page-footer.component';
-import { MetadataItem } from './models/metadata.model';
+
+interface MetadataTemplate {
+  id: string;
+  name: string;
+  type: 'Single-line Text' | 'Dropdown List';
+  context?: string;
+  prompt: string;
+  required?: boolean;
+  categories?: Record<string, string>;
+  values?: string[];
+}
 
 @Component({
   selector: 'app-metadata',
@@ -17,11 +29,12 @@ import { MetadataItem } from './models/metadata.model';
   imports: [
     CommonModule,
     FormsModule,
+    MatCardModule,
     MatButtonModule,
-    MatIconModule,
-    MatSelectModule,
-    MatInputModule,
     MatFormFieldModule,
+    MatInputModule,
+    MatSelectModule,
+    MatSlideToggleModule,
     PageHeaderComponent,
     PageFooterComponent,
   ],
@@ -38,31 +51,111 @@ import { MetadataItem } from './models/metadata.model';
       <main class="content-container">
         <h1>Metadata</h1>
 
-        <div class="settings-card">
+        <div class="metadata-layout">
           <div class="add-metadata-section">
             <h2>Add new metadata</h2>
             <mat-form-field appearance="outline" class="metadata-select">
               <mat-select
-                placeholder="Select metadata"
-                [(ngModel)]="selectedMetadataType"
-                (selectionChange)="onMetadataTypeSelected()"
+                placeholder="Metadata *"
+                [(ngModel)]="selectedMetadataId"
+                (selectionChange)="onMetadataSelected()"
               >
-                <mat-option value="text">Single-line Text</mat-option>
-                <mat-option value="dropdown">Dropdown List</mat-option>
+                <mat-option
+                  *ngFor="let option of metadataOptions"
+                  [value]="option.id"
+                >
+                  {{ option.name }}
+                </mat-option>
               </mat-select>
             </mat-form-field>
+
+            @if (selectedTemplate) {
+            <div class="metadata-form">
+              <div class="metadata-type">TYPE {{ selectedTemplate.type }}</div>
+
+              <mat-form-field appearance="outline" class="full-width">
+                <textarea
+                  matInput
+                  placeholder="Context"
+                  [(ngModel)]="selectedTemplate.context"
+                  rows="3"
+                >
+                </textarea>
+                <mat-hint>Provided to author when using this field.</mat-hint>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="full-width">
+                <textarea
+                  matInput
+                  placeholder="Prompt *"
+                  [(ngModel)]="selectedTemplate.prompt"
+                  required
+                  rows="3"
+                >
+                </textarea>
+              </mat-form-field>
+
+              @if (selectedTemplate.type === 'Dropdown List') {
+              <mat-slide-toggle
+                [(ngModel)]="selectedTemplate.required"
+                color="primary"
+                class="require-toggle"
+              >
+                Require this metadata when authoring.
+              </mat-slide-toggle>
+
+              <hr class="section-divider" />
+
+              @for (category of dropdownCategories; track category) {
+              <div class="category-section">
+                <div class="category-label">{{ category.toUpperCase() }}</div>
+                <mat-form-field appearance="outline" class="full-width">
+                  <textarea
+                    matInput
+                    placeholder="Prompt"
+                    [(ngModel)]="selectedTemplate.categories![category]"
+                    rows="3"
+                  >
+                  </textarea>
+                </mat-form-field>
+              </div>
+              } } @if (selectedTemplate.type === 'Single-line Text') {
+              <mat-slide-toggle
+                [(ngModel)]="selectedTemplate.required"
+                color="primary"
+              >
+                Require this metadata when authoring.
+              </mat-slide-toggle>
+              }
+
+              <div class="form-actions">
+                <button mat-button (click)="cancelAdd()">Cancel</button>
+                <button
+                  mat-flat-button
+                  color="primary"
+                  [disabled]="!isTemplateValid()"
+                  (click)="addMetadata()"
+                >
+                  Add
+                </button>
+              </div>
+            </div>
+            }
           </div>
 
-          <div class="metadata-list">
-            @for (item of metadata; track item.id) {
+          <div class="added-metadata-section">
+            <h2>Added Metadata</h2>
+            @if (!addedMetadata.length) {
+            <div class="no-metadata">No metadata has been added yet.</div>
+            } @else { @for (item of addedMetadata; track item.id) {
             <div class="metadata-item">
               <div class="metadata-header">
-                <h3>
+                <div class="metadata-title">
                   {{ item.name }}
                   @if (item.required) {
-                  <span class="required">Required</span>
+                  <span class="required-tag">Required</span>
                   }
-                </h3>
+                </div>
                 <div class="metadata-type">{{ item.type }}</div>
                 <button class="edit-button" (click)="editMetadata(item)">
                   Edit
@@ -70,32 +163,30 @@ import { MetadataItem } from './models/metadata.model';
               </div>
 
               <div class="metadata-content">
-                <div class="prompt-section">
-                  <h4>PROMPT</h4>
-                  <p>{{ item.prompt }}</p>
-                </div>
+                <div class="section-label">PROMPT</div>
+                <p class="prompt-text">{{ item.prompt }}</p>
 
-                @if (item.type === 'Dropdown List' && item.values) {
-                <div class="values-section">
-                  <h4>FIVE VALUES</h4>
+                @if (item.type === 'Dropdown List') {
+                <div class="dropdown-values">
+                  <div class="section-label">FIVE VALUES</div>
                   <div class="values-list">
                     @for (value of item.values; track value) {
-                    <div class="value-item">{{ value }}</div>
+                    <span class="value-item">{{ value }}</span>
                     }
                   </div>
                 </div>
                 }
               </div>
             </div>
-            }
+            } }
           </div>
+        </div>
 
-          <div class="button-row">
-            <button mat-button (click)="cancel()">Cancel</button>
-            <button mat-flat-button class="save-button" (click)="save()">
-              Save
-            </button>
-          </div>
+        <div class="page-actions">
+          <button mat-button (click)="cancel()">Cancel</button>
+          <button mat-flat-button class="save-button" (click)="save()">
+            Save
+          </button>
         </div>
       </main>
 
@@ -144,15 +235,19 @@ import { MetadataItem } from './models/metadata.model';
         }
       }
 
-      .settings-card {
-        background: white;
-        border-radius: 4px;
-        padding: 32px;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+      .metadata-layout {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 24px;
+        margin-bottom: 24px;
       }
 
-      .add-metadata-section {
-        margin-bottom: 32px;
+      .add-metadata-section,
+      .added-metadata-section {
+        background: white;
+        border-radius: 4px;
+        padding: 24px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
 
         h2 {
           font-size: 14px;
@@ -164,11 +259,46 @@ import { MetadataItem } from './models/metadata.model';
 
       .metadata-select {
         width: 100%;
-        max-width: 300px;
       }
 
-      .metadata-list {
-        margin-bottom: 32px;
+      .metadata-form {
+        margin-top: 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+      }
+
+      .metadata-type {
+        font-size: 12px;
+        color: rgba(0, 0, 0, 0.6);
+        margin-bottom: 8px;
+      }
+
+      .category-section {
+        .category-label {
+          font-size: 12px;
+          font-weight: 500;
+          color: rgba(0, 0, 0, 0.6);
+          margin-bottom: 8px;
+        }
+      }
+
+      .form-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 8px;
+        margin-top: 16px;
+        padding-top: 16px;
+        border-top: 1px solid rgba(0, 0, 0, 0.08);
+      }
+
+      .no-metadata {
+        color: rgba(0, 0, 0, 0.38);
+        font-size: 14px;
+        padding: 16px;
+        text-align: center;
+        background: rgba(0, 0, 0, 0.02);
+        border-radius: 4px;
       }
 
       .metadata-item {
@@ -188,17 +318,15 @@ import { MetadataItem } from './models/metadata.model';
         background-color: rgba(0, 0, 0, 0.02);
         border-bottom: 1px solid rgba(0, 0, 0, 0.12);
 
-        h3 {
-          font-size: 14px;
-          font-weight: 400;
-          margin: 0;
-          color: rgba(0, 0, 0, 0.87);
+        .metadata-title {
           flex: 1;
+          font-size: 14px;
+          color: rgba(0, 0, 0, 0.87);
 
-          .required {
+          .required-tag {
             color: #008099;
-            margin-left: 8px;
             font-size: 12px;
+            margin-left: 8px;
           }
         }
 
@@ -226,20 +354,21 @@ import { MetadataItem } from './models/metadata.model';
       .metadata-content {
         padding: 16px;
 
-        h4 {
+        .section-label {
           font-size: 12px;
           font-weight: 500;
           color: rgba(0, 0, 0, 0.6);
-          margin: 0 0 8px;
+          margin-bottom: 8px;
         }
 
-        p {
+        .prompt-text {
           font-size: 14px;
           color: rgba(0, 0, 0, 0.87);
-          margin: 0;
+          margin: 0 0 16px;
+          line-height: 1.5;
         }
 
-        .values-section {
+        .dropdown-values {
           margin-top: 16px;
         }
 
@@ -247,21 +376,18 @@ import { MetadataItem } from './models/metadata.model';
           display: flex;
           flex-wrap: wrap;
           gap: 8px;
-        }
 
-        .value-item {
-          font-size: 14px;
-          color: rgba(0, 0, 0, 0.87);
+          .value-item {
+            font-size: 14px;
+            color: rgba(0, 0, 0, 0.87);
+          }
         }
       }
 
-      .button-row {
+      .page-actions {
         display: flex;
         justify-content: flex-end;
         gap: 8px;
-        margin-top: 32px;
-        padding-top: 24px;
-        border-top: 1px solid rgba(0, 0, 0, 0.08);
       }
 
       .save-button {
@@ -274,51 +400,129 @@ import { MetadataItem } from './models/metadata.model';
           display: none;
         }
       }
+      .full-width {
+        width: 100%;
+      }
+
+      .require-toggle {
+        margin: 8px 0;
+      }
+
+      .section-divider {
+        border: none;
+        border-top: 1px solid rgba(0, 0, 0, 0.12);
+        margin: 24px 0;
+      }
+
+      .category-section {
+        margin-bottom: 16px;
+
+        .category-label {
+          font-size: 12px;
+          font-weight: 500;
+          color: rgba(0, 0, 0, 0.6);
+          margin-bottom: 8px;
+          text-transform: uppercase;
+        }
+
+        mat-form-field {
+          width: 100%;
+        }
+      }
+
+      ::ng-deep {
+        .mat-mdc-form-field {
+          .mat-mdc-form-field-hint {
+            font-size: 12px;
+            color: rgba(0, 0, 0, 0.6);
+          }
+        }
+      }
     `,
   ],
 })
 export class MetadataComponent {
-  selectedMetadataType: string | null = null;
+  selectedMetadataId: string | null = null;
+  selectedTemplate: MetadataTemplate | null = null;
+  addedMetadata: MetadataTemplate[] = [];
 
-  metadata: MetadataItem[] = [
-    {
-      id: '1',
-      name: 'Apples',
-      type: 'Single-line Text',
-      required: true,
-      prompt:
-        'Lorem ipsum dolor sit amet consectetur. Ultricies pharetra magna risus fames sed egestas tristique fusce auctor. Et eget pulvinar sed quis at. Vitae sem velit maecenas nulla purus eu sit non mauris.',
-    },
-    {
-      id: '2',
-      name: 'Pears',
-      type: 'Single-line Text',
-      required: false,
-      prompt:
-        'Lorem ipsum dolor sit amet consectetur. Ultricies pharetra magna risus fames sed egestas tristique fusce auctor. Et eget pulvinar sed quis at.',
-    },
-    {
-      id: '3',
-      name: 'Skill',
-      type: 'Dropdown List',
-      required: false,
-      prompt:
-        'Lorem ipsum dolor sit amet consectetur. Ultricies pharetra magna risus fames sed egestas tristique fusce auctor.',
-      values: ['Value 1', 'Value 2', 'Value 3', 'Value 4', 'Value 5'],
-    },
+  metadataOptions = [
+    { id: 'apples', name: 'Apples', type: 'Single-line Text' as const },
+    { id: 'skills', name: 'Skills', type: 'Dropdown List' as const },
+    { id: 'content', name: 'Content area', type: 'Single-line Text' as const },
+  ];
+
+  dropdownCategories = [
+    'grammar',
+    'listening',
+    'reading',
+    'speaking',
+    'vocabulary',
+    'writing',
   ];
 
   constructor(private router: Router) {}
 
-  onMetadataTypeSelected(): void {
-    // TODO: Implement add new metadata dialog
-    console.log('Selected metadata type:', this.selectedMetadataType);
-    this.selectedMetadataType = null;
+  onMetadataSelected(): void {
+    if (!this.selectedMetadataId) return;
+
+    const option = this.metadataOptions.find(
+      (o) => o.id === this.selectedMetadataId
+    );
+    if (!option) return;
+
+    if (option.type === 'Dropdown List') {
+      this.selectedTemplate = {
+        id: option.id,
+        name: option.name,
+        type: option.type,
+        prompt: '',
+        categories: this.dropdownCategories.reduce((acc, cat) => {
+          acc[cat] = '';
+          return acc;
+        }, {} as Record<string, string>),
+        values: ['Value 1', 'Value 2', 'Value 3', 'Value 4', 'Value 5'],
+      };
+    } else {
+      this.selectedTemplate = {
+        id: option.id,
+        name: option.name,
+        type: option.type,
+        prompt: '',
+      };
+    }
   }
 
-  editMetadata(item: MetadataItem): void {
-    // TODO: Implement edit metadata dialog
-    console.log('Editing metadata:', item);
+  isTemplateValid(): boolean {
+    if (!this.selectedTemplate) return false;
+    if (!this.selectedTemplate.prompt) return false;
+
+    if (this.selectedTemplate.type === 'Dropdown List') {
+      return !Object.values(this.selectedTemplate.categories || {}).some(
+        (v) => !v
+      );
+    }
+
+    return true;
+  }
+
+  addMetadata(): void {
+    if (!this.selectedTemplate || !this.isTemplateValid()) return;
+
+    this.addedMetadata.push({ ...this.selectedTemplate });
+    this.selectedMetadataId = null;
+    this.selectedTemplate = null;
+  }
+
+  editMetadata(item: MetadataTemplate): void {
+    this.addedMetadata = this.addedMetadata.filter((m) => m.id !== item.id);
+    this.selectedMetadataId = item.id;
+    this.selectedTemplate = { ...item };
+  }
+
+  cancelAdd(): void {
+    this.selectedMetadataId = null;
+    this.selectedTemplate = null;
   }
 
   cancel(): void {
@@ -326,7 +530,7 @@ export class MetadataComponent {
   }
 
   save(): void {
-    console.log('Saving metadata:', this.metadata);
+    console.log('Saving metadata:', this.addedMetadata);
     this.router.navigate(['/dashboard']);
   }
 }
