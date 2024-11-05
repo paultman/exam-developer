@@ -76,7 +76,6 @@ import { MatMenuModule } from '@angular/material/menu';
       .app-info {
         display: flex;
         flex-direction: column;
-        gap: 2px;
 
         .title-label {
           font-size: 12px;
