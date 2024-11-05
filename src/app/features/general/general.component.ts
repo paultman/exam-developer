@@ -22,7 +22,7 @@ import { PageFooterComponent } from '../../shared/components/page-footer/page-fo
     PageFooterComponent,
   ],
   template: `
-    <div class="page-wrapper">
+    <div class="topaz-page-content">
       <app-page-header></app-page-header>
 
       <nav class="breadcrumb">
