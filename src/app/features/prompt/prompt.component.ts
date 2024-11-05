@@ -30,7 +30,7 @@ import { FormsModule } from '@angular/forms';
     PageFooterComponent,
   ],
   template: `
-    <div class="page-wrapper">
+    <div class="topaz-page-content">
       <app-page-header></app-page-header>
 
       <nav class="breadcrumb">
