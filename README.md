@@ -1,27 +1,36 @@
-# ExamDeveloper
+# Exam Developer, Item Assist
 
-This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 17.0.8.
+## Project Description
 
-## Development server
+Exam Developer, Item Assist allows managers or prompt engineers to configure exams to be generated, edited, and tested by exam authors with the assistance of AI.
 
-Run `ng serve` for a dev server. Navigate to `http://localhost:4200/`. The application will automatically reload if you change any of the source files.
+## Installation Instructions
 
-## Code scaffolding
+1. Ensure you have Node.js and npm installed.
+2. Clone the repository.
+3. Navigate to the project directory.
+4. Setup your .npmrc file to install @fontawesome and @pearsonvue/topaz-angular-ui while on network that has access to those modules.
+5. Run `npm install` to install the remaining project dependencies.
 
-Run `ng generate component component-name` to generate a new component. You can also use `ng generate directive|pipe|service|class|guard|interface|enum|module`.
+## Usage Instructions
 
-## Build
+1. Run `ng serve` to start the development server.
+2. Navigate to `http://localhost:4200/` in your web browser.
+3. The application will automatically reload if you change any of the source files.
 
-Run `ng build` to build the project. The build artifacts will be stored in the `dist/` directory.
+## Features
 
-## Running unit tests
+- Configure exams for AI assistance.
+- Leverages Topaz UI, built on Angular Material UI.
 
-Run `ng test` to execute the unit tests via [Karma](https://karma-runner.github.io).
+## Contributing
 
-## Running end-to-end tests
+Contributions are welcome! Please contact the project maintainers at help@pearsonvue.com for more information.
 
-Run `ng e2e` to execute the end-to-end tests via a platform of your choice. To use this command, you need to first add a package that implements end-to-end testing capabilities.
+## License
 
-## Further help
+Please contact help@pearsonvue.com for licensing information.
 
-To get more help on the Angular CLI use `ng help` or go check out the [Angular CLI Overview and Command Reference](https://angular.io/cli) page.
+## Contact Information
+
+For more information or support, please contact help@pearsonvue.com.
