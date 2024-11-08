@@ -37,3 +37,15 @@ $exam-dev-theme: mat.define-light-theme((
   background: #003057 !important; // Pearson navy blue
   color: white !important;
 }
+
+// Accessibility utilities
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  border: 0;
+}
