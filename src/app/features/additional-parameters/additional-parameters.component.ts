@@ -1,5 +1,4 @@
-// src/app/features/additional-parameters/additional-parameters.component.ts
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
   FormBuilder,
@@ -14,6 +13,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatIconModule } from '@angular/material/icon';
+import { A11yModule } from '@angular/cdk/a11y';
 import { PageHeaderComponent } from '../../shared/components/page-header/page-header.component';
 import { PageFooterComponent } from '../../shared/components/page-footer/page-footer.component';
 
@@ -37,106 +37,213 @@ interface Parameter {
     MatInputModule,
     MatSlideToggleModule,
     MatIconModule,
+    A11yModule,
     PageHeaderComponent,
     PageFooterComponent,
   ],
   template: `
-    <div class="topaz-page-content">
+    <div class="page-wrapper">
+      <!-- Skip Link -->
+      <a class="skip-link" href="#main-content"> Skip to main content </a>
+
       <app-page-header></app-page-header>
 
-      <nav class="breadcrumb">
-        <a href="#">Item bank name</a> / <a href="#">Project name</a> /
-        <a href="#">Item Assist</a> /
-        <span>Additional parameters</span>
+      <nav
+        class="breadcrumb"
+        role="navigation"
+        aria-label="Breadcrumb navigation"
+      >
+        <ol>
+          <li>
+            <a href="#" aria-label="Navigate to item bank">Item bank name</a>
+          </li>
+          <li><a href="#" aria-label="Navigate to project">Project name</a></li>
+          <li>
+            <a href="#" aria-label="Navigate to Item Assist">Item Assist</a>
+          </li>
+          <li><span aria-current="page">Additional parameters</span></li>
+        </ol>
       </nav>
 
-      <main class="content-container">
-        <h1>Additional parameters</h1>
+      <main
+        id="main-content"
+        class="content-container"
+        role="main"
+        aria-labelledby="page-title"
+      >
+        <h1 id="page-title" tabindex="-1">Additional parameters</h1>
 
         <div class="parameters-layout">
-          <div class="add-parameter-section">
-            <h2>Add new parameter</h2>
+          <section
+            class="add-parameter-section"
+            aria-labelledby="add-parameter-title"
+          >
+            <h2 id="add-parameter-title">Add new parameter</h2>
 
-            <div class="parameter-form" [formGroup]="parameterForm">
+            <form
+              class="parameter-form"
+              [formGroup]="parameterForm"
+              (ngSubmit)="addParameter()"
+              role="form"
+              aria-label="New parameter form"
+            >
               <mat-form-field appearance="outline">
+                <mat-label>Field name</mat-label>
                 <input
                   matInput
-                  placeholder="Field name *"
                   formControlName="fieldName"
                   required
+                  [attr.aria-label]="'Field name' + (parameterForm.get('fieldName')?.errors?.['required'] ? ' (Required)' : '')"
+                  [attr.aria-invalid]="
+                    parameterForm.get('fieldName')?.invalid &&
+                    parameterForm.get('fieldName')?.touched
+                  "
                 />
+                <mat-error
+                  role="alert"
+                  *ngIf="parameterForm.get('fieldName')?.errors?.['required']"
+                >
+                  Field name is required
+                </mat-error>
               </mat-form-field>
 
               <mat-form-field appearance="outline">
+                <mat-label>Context</mat-label>
                 <textarea
                   matInput
-                  placeholder="Context"
                   formControlName="context"
                   rows="4"
+                  aria-label="Context information"
                 >
                 </textarea>
                 <mat-hint>Provided to author when using this field.</mat-hint>
               </mat-form-field>
 
               <mat-form-field appearance="outline">
+                <mat-label>Prompt</mat-label>
                 <textarea
                   matInput
-                  placeholder="Prompt *"
                   formControlName="prompt"
                   required
                   rows="4"
+                  [attr.aria-label]="'Prompt' + (parameterForm.get('prompt')?.errors?.['required'] ? ' (Required)' : '')"
+                  [attr.aria-invalid]="
+                    parameterForm.get('prompt')?.invalid &&
+                    parameterForm.get('prompt')?.touched
+                  "
                 >
                 </textarea>
+                <mat-error
+                  role="alert"
+                  *ngIf="parameterForm.get('prompt')?.errors?.['required']"
+                >
+                  Prompt is required
+                </mat-error>
               </mat-form-field>
 
-              <mat-slide-toggle formControlName="required">
+              <mat-slide-toggle
+                formControlName="required"
+                aria-label="Make parameter required"
+              >
                 Author must enter this parameter before generating content.
               </mat-slide-toggle>
 
-              <div class="form-actions">
-                <button mat-button (click)="cancelAdd()">Cancel</button>
+              <div class="form-actions" role="group" aria-label="Form actions">
                 <button
+                  type="button"
+                  mat-button
+                  (click)="cancelAdd()"
+                  aria-label="Cancel adding parameter"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
                   mat-flat-button
                   color="primary"
                   [disabled]="!isValid()"
-                  (click)="addParameter()"
+                  aria-label="Add parameter"
                 >
                   Add
                 </button>
               </div>
-            </div>
-          </div>
+            </form>
+          </section>
 
-          <div class="added-parameters-section">
-            <h2>Added parameters</h2>
+          <section
+            class="added-parameters-section"
+            aria-labelledby="added-parameters-title"
+          >
+            <h2 id="added-parameters-title">Added parameters</h2>
             @if (!parameters.length) {
-            <div class="no-parameters">No parameters have been added yet.</div>
-            } @else { @for (param of parameters; track param.id) {
-            <div class="parameter-item">
-              <div class="parameter-header">
-                <div class="title">
-                  {{ param.fieldName }}
-                  @if (param.required) {
-                  <span class="required-tag">Required</span>
-                  }
-                </div>
-                <button class="edit-button" (click)="editParameter(param)">
-                  Edit
-                </button>
-              </div>
-
-              <div class="parameter-content">
-                <div class="section-label">PROMPT</div>
-                <p class="prompt-text">{{ param.prompt }}</p>
-              </div>
+            <div
+              class="no-parameters"
+              role="status"
+              aria-label="No parameters added"
+            >
+              No parameters have been added yet.
             </div>
-            } }
-          </div>
+            } @else {
+            <div
+              class="parameters-list"
+              role="list"
+              aria-label="List of added parameters"
+            >
+              @for (param of parameters; track param.id) {
+              <div class="parameter-item" role="listitem">
+                <div class="parameter-header">
+                  <div class="title">
+                    {{ param.fieldName }}
+                    @if (param.required) {
+                    <span
+                      class="required-tag"
+                      role="status"
+                      aria-label="Required parameter"
+                    >
+                      Required
+                    </span>
+                    }
+                  </div>
+                  <button
+                    class="edit-button"
+                    (click)="editParameter(param)"
+                    aria-label="Edit parameter {{ param.fieldName }}"
+                  >
+                    Edit
+                  </button>
+                </div>
+
+                <div
+                  class="parameter-content"
+                  role="region"
+                  [attr.aria-label]="'Details for ' + param.fieldName"
+                >
+                  <div class="section-label">PROMPT</div>
+                  <p class="prompt-text">{{ param.prompt }}</p>
+                </div>
+              </div>
+              }
+            </div>
+            }
+          </section>
         </div>
 
-        <div class="page-actions">
-          <button mat-button (click)="cancel()">Cancel</button>
-          <button mat-flat-button class="save-button" (click)="save()">
+        <div class="page-actions" role="group" aria-label="Page actions">
+          <button
+            mat-button
+            (click)="cancel()"
+            type="button"
+            aria-label="Cancel changes and return to dashboard"
+          >
+            Cancel
+          </button>
+          <button
+            mat-flat-button
+            class="save-button"
+            (click)="save()"
+            type="button"
+            aria-label="Save changes and return to dashboard"
+          >
             Save
           </button>
         </div>
@@ -147,6 +254,23 @@ interface Parameter {
   `,
   styles: [
     `
+      .skip-link {
+        position: absolute;
+        top: -40px;
+        left: 0;
+        background: #0073ea;
+        color: white;
+        padding: 8px;
+        z-index: 100;
+        transition: top 0.2s ease;
+
+        &:focus {
+          top: 0;
+          outline: 2px solid #ffffff;
+          outline-offset: 2px;
+        }
+      }
+
       .page-wrapper {
         min-height: 100vh;
         display: flex;
@@ -161,12 +285,42 @@ interface Parameter {
         background: white;
         border-bottom: 1px solid rgba(0, 0, 0, 0.08);
 
+        ol {
+          list-style: none;
+          padding: 0;
+          margin: 0;
+          display: flex;
+          flex-wrap: wrap;
+        }
+
+        li {
+          display: flex;
+          align-items: center;
+
+          &:not(:last-child)::after {
+            content: '/';
+            margin: 0 8px;
+            color: rgba(0, 0, 0, 0.6);
+          }
+        }
+
         a {
           color: #0073ea;
           text-decoration: none;
+          padding: 4px;
+          border-radius: 4px;
 
           &:hover {
             text-decoration: underline;
+          }
+
+          &:focus {
+            outline: 2px solid #0073ea;
+            outline-offset: 2px;
+          }
+
+          &:focus:not(:focus-visible) {
+            outline: none;
           }
         }
       }
@@ -184,6 +338,10 @@ interface Parameter {
           font-weight: 400;
           margin: 0 0 24px;
           color: rgba(0, 0, 0, 0.87);
+
+          &:focus {
+            outline: none;
+          }
         }
       }
 
@@ -192,6 +350,10 @@ interface Parameter {
         grid-template-columns: repeat(2, 1fr);
         gap: 24px;
         margin-bottom: 24px;
+
+        @media (max-width: 768px) {
+          grid-template-columns: 1fr;
+        }
       }
 
       .add-parameter-section,
@@ -202,8 +364,8 @@ interface Parameter {
         box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
 
         h2 {
-          font-size: 14px;
-          font-weight: 400;
+          font-size: 16px;
+          font-weight: 500;
           margin: 0 0 16px;
           color: rgba(0, 0, 0, 0.87);
         }
@@ -217,6 +379,12 @@ interface Parameter {
         mat-form-field {
           width: 100%;
         }
+
+        ::ng-deep {
+          .mat-mdc-form-field-error {
+            font-size: 12px;
+          }
+        }
       }
 
       .form-actions {
@@ -226,6 +394,19 @@ interface Parameter {
         margin-top: 16px;
         padding-top: 16px;
         border-top: 1px solid rgba(0, 0, 0, 0.08);
+
+        button {
+          min-width: 100px;
+
+          &:focus {
+            outline: 2px solid #0073ea;
+            outline-offset: 2px;
+          }
+
+          &:focus:not(:focus-visible) {
+            outline: none;
+          }
+        }
       }
 
       .no-parameters {
@@ -257,12 +438,14 @@ interface Parameter {
         .title {
           flex: 1;
           font-size: 14px;
+          font-weight: 500;
           color: rgba(0, 0, 0, 0.87);
 
           .required-tag {
             color: #008099;
             font-size: 12px;
             margin-left: 8px;
+            font-weight: normal;
           }
         }
 
@@ -270,13 +453,22 @@ interface Parameter {
           color: #0073ea;
           background: none;
           border: none;
-          padding: 4px 8px;
+          padding: 8px 16px;
           cursor: pointer;
           font-size: 14px;
+          border-radius: 4px;
 
           &:hover {
             background-color: rgba(0, 115, 234, 0.04);
-            border-radius: 4px;
+          }
+
+          &:focus {
+            outline: 2px solid #0073ea;
+            outline-offset: 2px;
+          }
+
+          &:focus:not(:focus-visible) {
+            outline: none;
           }
         }
       }
@@ -289,6 +481,7 @@ interface Parameter {
           font-weight: 500;
           color: rgba(0, 0, 0, 0.6);
           margin-bottom: 8px;
+          text-transform: uppercase;
         }
 
         .prompt-text {
@@ -303,6 +496,19 @@ interface Parameter {
         display: flex;
         justify-content: flex-end;
         gap: 8px;
+
+        button {
+          min-width: 100px;
+
+          &:focus {
+            outline: 2px solid #0073ea;
+            outline-offset: 2px;
+          }
+
+          &:focus:not(:focus-visible) {
+            outline: none;
+          }
+        }
       }
 
       .save-button {
@@ -310,15 +516,19 @@ interface Parameter {
         color: white !important;
       }
 
-      ::ng-deep {
-        .mat-mdc-form-field-subscript-wrapper {
-          display: none;
+      @media (forced-colors: active) {
+        .parameter-item {
+          border: 1px solid ButtonText;
+        }
+
+        .edit-button {
+          border: 1px solid ButtonText;
         }
       }
     `,
   ],
 })
-export class AdditionalParametersComponent {
+export class AdditionalParametersComponent implements OnInit {
   parameterForm: FormGroup;
   parameters: Parameter[] = [
     {
@@ -353,6 +563,16 @@ export class AdditionalParametersComponent {
     });
   }
 
+  ngOnInit(): void {
+    // Set initial focus to the main heading
+    setTimeout(() => {
+      const mainHeading = document.querySelector('h1');
+      if (mainHeading) {
+        (mainHeading as HTMLElement).focus();
+      }
+    });
+  }
+
   isValid(): boolean {
     return this.parameterForm.valid;
   }
@@ -380,6 +600,8 @@ export class AdditionalParametersComponent {
           control.markAsPristine();
         }
       });
+      // Announce to screen readers
+      this.announceChange('Parameter added successfully');
     }
   }
 
@@ -391,6 +613,8 @@ export class AdditionalParametersComponent {
       prompt: param.prompt,
       required: param.required,
     });
+    // Announce to screen readers
+    this.announceChange(`Editing parameter ${param.fieldName}`);
   }
 
   cancelAdd(): void {
@@ -410,14 +634,31 @@ export class AdditionalParametersComponent {
         control.markAsPristine();
       }
     });
+    // Announce to screen readers
+    this.announceChange('Form cleared');
   }
 
   cancel(): void {
+    this.announceChange('Canceling changes and returning to dashboard');
     this.router.navigate(['/dashboard']);
   }
 
   save(): void {
+    this.announceChange('Saving parameters and returning to dashboard');
     console.log('Saving parameters:', this.parameters);
     this.router.navigate(['/dashboard']);
+  }
+
+  private announceChange(message: string): void {
+    const announcer = document.createElement('div');
+    announcer.setAttribute('aria-live', 'polite');
+    announcer.setAttribute('aria-atomic', 'true');
+    announcer.classList.add('sr-only');
+    announcer.textContent = message;
+    document.body.appendChild(announcer);
+
+    setTimeout(() => {
+      document.body.removeChild(announcer);
+    }, 1000);
   }
 }
