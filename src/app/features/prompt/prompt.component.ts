@@ -1,5 +1,5 @@
 // src/app/features/prompt/prompt.component.ts
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -9,6 +9,7 @@ import { MatMenuModule } from '@angular/material/menu';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
+import { A11yModule } from '@angular/cdk/a11y';
 import { PageHeaderComponent } from '../../shared/components/page-header/page-header.component';
 import { PageFooterComponent } from '../../shared/components/page-footer/page-footer.component';
 import { FormsModule } from '@angular/forms';
@@ -26,83 +27,151 @@ import { FormsModule } from '@angular/forms';
     MatButtonToggleModule,
     MatFormFieldModule,
     MatInputModule,
+    A11yModule,
     PageHeaderComponent,
     PageFooterComponent,
   ],
   template: `
-    <div class="topaz-page-content">
+    <div class="page-wrapper">
+      <!-- Skip Link -->
+      <a class="skip-link" href="#main-content"> Skip to main content </a>
+
       <app-page-header></app-page-header>
 
-      <nav class="breadcrumb">
-        <a href="#">Item bank name</a> / <a href="#">Project name</a> /
-        <a href="#">Item Assist</a> /
-        <span>Prompt</span>
+      <nav
+        class="breadcrumb"
+        role="navigation"
+        aria-label="Breadcrumb navigation"
+      >
+        <ol>
+          <li>
+            <a href="#" aria-label="Navigate to item bank">Item bank name</a>
+          </li>
+          <li><a href="#" aria-label="Navigate to project">Project name</a></li>
+          <li>
+            <a href="#" aria-label="Navigate to Item Assist">Item Assist</a>
+          </li>
+          <li><span aria-current="page">Prompt</span></li>
+        </ol>
       </nav>
 
-      <main class="content-container">
+      <main id="main-content" class="content-container" role="main">
         <div class="header-row">
-          <h1>Prompt</h1>
-          <div class="header-actions">
-            <button mat-button (click)="cancel()">Cancel</button>
-            <button mat-flat-button class="save-button" (click)="save()">
+          <h1 id="page-title" tabindex="-1">Prompt</h1>
+          <div class="header-actions" role="group" aria-label="Header actions">
+            <button
+              mat-button
+              (click)="cancel()"
+              type="button"
+              aria-label="Cancel changes and return to dashboard"
+            >
+              Cancel
+            </button>
+            <button
+              mat-flat-button
+              class="save-button"
+              (click)="save()"
+              type="button"
+              aria-label="Save changes and return to dashboard"
+            >
               Save
             </button>
           </div>
         </div>
 
-        <div class="prompt-card">
-          <div class="toolbar">
+        <div class="prompt-card" role="region" aria-labelledby="page-title">
+          <div class="toolbar" role="toolbar" aria-label="Prompt toolbar">
             <mat-button-toggle-group
               [(ngModel)]="selectedView"
               class="view-toggles"
+              role="group"
+              aria-label="View options"
             >
-              <mat-button-toggle value="grid">
-                <mat-icon>grid_view</mat-icon>
+              <mat-button-toggle value="grid" aria-label="Grid view">
+                <mat-icon aria-hidden="true">grid_view</mat-icon>
               </mat-button-toggle>
-              <mat-button-toggle value="chart">
-                <mat-icon>bar_chart</mat-icon>
+              <mat-button-toggle value="chart" aria-label="Chart view">
+                <mat-icon aria-hidden="true">bar_chart</mat-icon>
               </mat-button-toggle>
-              <mat-button-toggle value="trend">
-                <mat-icon>trending_up</mat-icon>
+              <mat-button-toggle value="trend" aria-label="Trend view">
+                <mat-icon aria-hidden="true">trending_up</mat-icon>
               </mat-button-toggle>
             </mat-button-toggle-group>
 
-            <div class="toolbar-right">
-              <span class="example-prompt">Use example prompt</span>
+            <div
+              class="toolbar-right"
+              role="group"
+              aria-label="Example prompt actions"
+            >
+              <span class="example-prompt" id="example-prompt-label">
+                Use example prompt
+              </span>
               <button
                 mat-stroked-button
                 [matMenuTriggerFor]="promptMenu"
                 class="insert-button"
+                aria-labelledby="example-prompt-label"
               >
                 Insert
-                <mat-icon>arrow_drop_down</mat-icon>
+                <mat-icon aria-hidden="true">arrow_drop_down</mat-icon>
               </button>
             </div>
 
             <mat-menu #promptMenu="matMenu">
-              <button mat-menu-item (click)="insertExample()">Insert</button>
-              <button mat-menu-item (click)="replaceWithExample()">
+              <button
+                mat-menu-item
+                (click)="insertExample()"
+                aria-label="Insert example at cursor position"
+              >
+                Insert
+              </button>
+              <button
+                mat-menu-item
+                (click)="replaceWithExample()"
+                aria-label="Replace entire prompt with example"
+              >
                 Replace
               </button>
             </mat-menu>
           </div>
 
-          <form [formGroup]="promptForm">
+          <form [formGroup]="promptForm" role="form" aria-label="Prompt form">
             <mat-form-field appearance="outline" class="prompt-field">
+              <mat-label>Prompt</mat-label>
               <textarea
                 matInput
                 formControlName="prompt"
-                placeholder="Prompt *"
                 required
                 rows="15"
+                aria-label="Enter your prompt text"
+                [attr.aria-required]="true"
               >
               </textarea>
+              <mat-error
+                role="alert"
+                *ngIf="promptForm.get('prompt')?.errors?.['required']"
+              >
+                Prompt is required
+              </mat-error>
             </mat-form-field>
           </form>
 
-          <div class="prompt-actions">
-            <button mat-button (click)="reset()">Reset</button>
-            <button mat-flat-button class="save-button" (click)="save()">
+          <div class="prompt-actions" role="group" aria-label="Form actions">
+            <button
+              mat-button
+              (click)="reset()"
+              type="button"
+              aria-label="Reset prompt to empty"
+            >
+              Reset
+            </button>
+            <button
+              mat-flat-button
+              class="save-button"
+              (click)="save()"
+              type="button"
+              aria-label="Save prompt and return to dashboard"
+            >
               Save
             </button>
           </div>
@@ -114,6 +183,23 @@ import { FormsModule } from '@angular/forms';
   `,
   styles: [
     `
+      .skip-link {
+        position: absolute;
+        top: -40px;
+        left: 0;
+        background: #0073ea;
+        color: white;
+        padding: 8px;
+        z-index: 100;
+        transition: top 0.2s ease;
+
+        &:focus {
+          top: 0;
+          outline: 2px solid #ffffff;
+          outline-offset: 2px;
+        }
+      }
+
       .page-wrapper {
         min-height: 100vh;
         display: flex;
@@ -128,12 +214,42 @@ import { FormsModule } from '@angular/forms';
         background: white;
         border-bottom: 1px solid rgba(0, 0, 0, 0.08);
 
+        ol {
+          list-style: none;
+          padding: 0;
+          margin: 0;
+          display: flex;
+          flex-wrap: wrap;
+        }
+
+        li {
+          display: flex;
+          align-items: center;
+
+          &:not(:last-child)::after {
+            content: '/';
+            margin: 0 8px;
+            color: rgba(0, 0, 0, 0.6);
+          }
+        }
+
         a {
           color: #0073ea;
           text-decoration: none;
+          padding: 4px;
+          border-radius: 4px;
 
           &:hover {
             text-decoration: underline;
+          }
+
+          &:focus {
+            outline: 2px solid #0073ea;
+            outline-offset: 2px;
+          }
+
+          &:focus:not(:focus-visible) {
+            outline: none;
           }
         }
       }
@@ -158,11 +274,28 @@ import { FormsModule } from '@angular/forms';
           font-weight: 400;
           margin: 0;
           color: rgba(0, 0, 0, 0.87);
+
+          &:focus {
+            outline: none;
+          }
         }
 
         .header-actions {
           display: flex;
           gap: 8px;
+
+          button {
+            min-width: 100px;
+
+            &:focus {
+              outline: 2px solid #0073ea;
+              outline-offset: 2px;
+            }
+
+            &:focus:not(:focus-visible) {
+              outline: none;
+            }
+          }
         }
       }
 
@@ -200,6 +333,10 @@ import { FormsModule } from '@angular/forms';
             width: 20px;
             line-height: 20px;
           }
+
+          .mat-button-toggle-focus-overlay {
+            border-radius: 4px;
+          }
         }
       }
 
@@ -223,9 +360,17 @@ import { FormsModule } from '@angular/forms';
             width: 20px;
             height: 20px;
           }
+
+          &:focus {
+            outline: 2px solid #0073ea;
+            outline-offset: 2px;
+          }
+
+          &:focus:not(:focus-visible) {
+            outline: none;
+          }
         }
       }
-
       .prompt-field {
         width: 100%;
 
@@ -234,6 +379,10 @@ import { FormsModule } from '@angular/forms';
             font-family: inherit;
             font-size: 14px;
             line-height: 1.5;
+          }
+
+          .mat-mdc-form-field-error {
+            font-size: 12px;
           }
         }
       }
@@ -245,6 +394,19 @@ import { FormsModule } from '@angular/forms';
         margin-top: 24px;
         padding-top: 24px;
         border-top: 1px solid rgba(0, 0, 0, 0.08);
+
+        button {
+          min-width: 100px;
+
+          &:focus {
+            outline: 2px solid #0073ea;
+            outline-offset: 2px;
+          }
+
+          &:focus:not(:focus-visible) {
+            outline: none;
+          }
+        }
       }
 
       .save-button {
@@ -252,15 +414,19 @@ import { FormsModule } from '@angular/forms';
         color: white !important;
       }
 
-      ::ng-deep {
-        .mat-mdc-form-field-subscript-wrapper {
-          display: none;
+      @media (forced-colors: active) {
+        .prompt-card {
+          border: 1px solid ButtonText;
+        }
+
+        .insert-button {
+          border: 1px solid ButtonText;
         }
       }
     `,
   ],
 })
-export class PromptComponent {
+export class PromptComponent implements OnInit {
   promptForm: FormGroup;
   selectedView = 'grid';
 
@@ -280,6 +446,16 @@ The stem and response options for all items should be neutral in terms of gender
     });
   }
 
+  ngOnInit(): void {
+    // Set initial focus to the main heading
+    setTimeout(() => {
+      const mainHeading = document.querySelector('h1');
+      if (mainHeading) {
+        (mainHeading as HTMLElement).focus();
+      }
+    });
+  }
+
   insertExample(): void {
     const currentValue = this.promptForm.get('prompt')?.value || '';
     const cursorPosition =
@@ -291,22 +467,40 @@ The stem and response options for all items should be neutral in terms of gender
       currentValue.substring(cursorPosition);
 
     this.promptForm.patchValue({ prompt: newValue });
+    this.announceChange('Example prompt inserted at cursor position');
   }
 
   replaceWithExample(): void {
     this.promptForm.patchValue({ prompt: this.examplePrompt });
+    this.announceChange('Prompt replaced with example');
   }
 
   reset(): void {
     this.promptForm.reset({ prompt: '' });
+    this.announceChange('Prompt cleared');
   }
 
   cancel(): void {
+    this.announceChange('Canceling changes and returning to dashboard');
     this.router.navigate(['/dashboard']);
   }
 
   save(): void {
+    this.announceChange('Saving prompt and returning to dashboard');
     console.log('Saving prompt:', this.promptForm.value);
     this.router.navigate(['/dashboard']);
+  }
+
+  private announceChange(message: string): void {
+    const announcer = document.createElement('div');
+    announcer.setAttribute('aria-live', 'polite');
+    announcer.setAttribute('aria-atomic', 'true');
+    announcer.classList.add('sr-only');
+    announcer.textContent = message;
+    document.body.appendChild(announcer);
+
+    setTimeout(() => {
+      document.body.removeChild(announcer);
+    }, 1000);
   }
 }
